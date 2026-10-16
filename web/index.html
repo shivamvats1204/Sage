@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sage · Your AI workspace</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body>
+<aside>
+  <a class="brand" href="/">s<span>✳</span>ge<span class="edition">WORKSPACE</span></a>
+  <p class="eyebrow">MAKE ROOM FOR GOOD IDEAS</p>
+  <label for="workspace">Your workspace</label><select id="workspace"></select>
+  <div class="section-head"><h2>Knowledge</h2><span id="doc-count">0</span></div>
+  <p class="muted">Bring your context. Keep the sources.</p>
+  <label class="upload" for="upload">＋ Add a document</label><input id="upload" type="file" accept=".pdf,.txt,.md,.csv,.json,.py" hidden>
+  <div id="documents"></div>
+  <div class="sidebar-footer"><button id="clear" class="quiet">Clear conversation</button><button id="export" class="quiet">Export conversation ↗</button><p class="muted small">Relevant passages go to your configured model. Keys stay on the server.</p></div>
+</aside>
+<main>
+  <header><div><span class="status-dot"></span><span id="status" role="status">Connecting…</span></div><button id="settings-toggle" class="quiet" aria-expanded="false">⚙ Advanced settings</button></header>
+  <section id="settings" hidden aria-label="Advanced settings">
+    <div class="section-head"><h2>Your workspace, your way.</h2><button id="reset-settings" class="quiet">Reset defaults</button></div>
+    <div class="settings-grid">
+      <label>Model ID<input id="model" maxlength="120"></label>
+      <label>Creativity (0–1)<input id="temperature" type="number" min="0" max="1" step="0.1"></label>
+      <label>Response token limit<input id="max_tokens" type="number" min="128" max="4096"></label>
+      <label>Model rounds (1–6)<input id="max_steps" type="number" min="1" max="6"></label>
+      <label>Source passages (1–8)<input id="retrieval_k" type="number" min="1" max="8"></label>
+      <label class="check"><input id="remember" type="checkbox"> Save and use conversation history</label>
+      <label class="check"><input id="allow_drafts" type="checkbox"> Allow draft creation</label>
+    </div>
+    <label>Custom instructions<textarea id="instructions" maxlength="3000" rows="2" placeholder="How would you like Sage to help?"></textarea></label>
+    <button id="save-settings">Save settings</button>
+  </section>
+  <div id="error" role="alert" hidden></div>
+  <section id="welcome"><span class="eyebrow">A LITTLE CONTEXT. A NEW POSSIBILITY.</span><h1>What are we<br><em>working on?</em></h1><p>Think it through. Connect your documents.<br>Turn a good question into something useful.</p>
+    <div class="suggestions"><button data-prompt="Compare my uploaded documents and cite the key differences."><span>01 / UNDERSTAND</span>Connect the dots ↗</button><button data-prompt="Help me turn an idea into an actionable project plan."><span>02 / CREATE</span>Start something good ↗</button><button data-prompt="Search my documents for the key findings and draft a concise briefing with citations."><span>03 / RESEARCH</span>Find what matters ↗</button></div>
+  </section>
+  <section id="messages" aria-live="polite" aria-label="Conversation"></section>
+  <section id="sources" hidden><details><summary>Sources & tool activity</summary><div id="source-content"></div><pre id="steps"></pre></details></section>
+  <section id="drafts" hidden><h2>Ready for review</h2><div id="draft-content"></div></section>
+  <footer><form id="chat-form"><label class="sr-only" for="message">Message Sage</label><textarea id="message" rows="2" maxlength="12000" placeholder="Ask, explore, or make something…" required></textarea><button id="send" type="submit" aria-label="Send message">↑</button></form><p class="small muted">Sage can make mistakes. Inspect sources and calculations. <span>ENTER TO SEND · SHIFT + ENTER FOR A NEW LINE</span></p></footer>
+</main>
+</body></html>

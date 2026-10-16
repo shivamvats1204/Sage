@@ -1,0 +1,7 @@
+.env
+.venv/
+.sage/
+__pycache__/
+*.pyc
+Data/*.mp3
+Data/*.jpg
