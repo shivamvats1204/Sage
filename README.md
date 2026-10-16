@@ -55,7 +55,7 @@ python -m pip install -r requirements-legacy.txt
 python legacy_main.py
 ```
 
-It retains its original provider and browser requirements. Those legacy integrations have not been migrated into the new agent or web shell. The `Backend/` and original `Frontend/GUI.py` modules remain intact.
+It retains its original provider and browser requirements: configure `Username`, `AssistantName`, `CohereAPIKey`, `GroqAPIKey`, `HuggingFaceAPIKey`, `AssistantVoice`, and `InputLanguage` in `.env` for the legacy integrations. Those legacy integrations have not been migrated into the new agent or web shell. The `Backend/` and original `Frontend/GUI.py` modules remain intact.
 
 ## Verify
 
