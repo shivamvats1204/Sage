@@ -23,7 +23,7 @@ class ChatProvider:
                    "max_tokens": settings.max_tokens}
         if tools:
             payload.update(tools=tools, tool_choice="auto")
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json", "User-Agent": "Sage/1.0"}
         if self.key:
             headers["Authorization"] = f"Bearer {self.key}"
         request = urllib.request.Request(self.base_url + "/chat/completions", json.dumps(payload).encode(), headers)
