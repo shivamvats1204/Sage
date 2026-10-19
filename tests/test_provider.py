@@ -31,3 +31,10 @@ class ProviderTests(unittest.TestCase):
         self.assertIn("403", str(raised.exception))
         self.assertNotIn(provider.key, str(raised.exception))
         self.assertNotIn("private error detail", str(raised.exception))
+
+    def test_rate_limit_explains_retry_without_private_body(self):
+        failure = urllib.error.HTTPError('https://example.com', 429, 'Too Many Requests', {'Retry-After':'15'}, io.BytesIO(b'private'))
+        with patch('urllib.request.urlopen', side_effect=failure), self.assertRaises(ProviderError) as raised:
+            ChatProvider().complete([], Settings(), [])
+        self.assertIn('Retry after 15 seconds', str(raised.exception))
+        self.assertNotIn('private', str(raised.exception))

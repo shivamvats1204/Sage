@@ -277,6 +277,49 @@ details p,pre{
   clip:rect(0,0,0,0)}
 [hidden]{
   display:none!important}
+.message{white-space:normal}
+.user-text{white-space:pre-wrap}
+.message-heading{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.message-heading strong{margin:0}
+.markdown-body{line-height:1.8;min-width:0}
+.markdown-body>:first-child{margin-top:0}
+.markdown-body h1,.markdown-body h2,.markdown-body h3,.markdown-body h4{font-family:Arial,sans-serif;letter-spacing:normal;line-height:1.35;font-weight:600;margin:1.4em 0 .6em}
+.markdown-body h1{font-size:25px}.markdown-body h2{font-size:21px}.markdown-body h3{font-size:17px}
+.markdown-body strong{display:inline;font-size:inherit;letter-spacing:normal;margin:0}
+.markdown-body p{margin:.7em 0}.markdown-body li{margin:.35em 0}
+.markdown-body a,.source-link,.action-link,.asset-download{color:#376d54;text-underline-offset:3px}
+.markdown-body blockquote{border-left:3px solid #9eaa72;margin:16px 0;padding:2px 18px;color:#5b6e59}
+.table-scroll{overflow:auto;max-width:100%;border:1px solid var(--line);border-radius:9px;margin:20px 0}
+table{border-collapse:collapse;width:100%;font-size:13px;text-align:left}
+th,td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;min-width:90px}
+th{background:#e9edde;font-weight:600}tr:last-child td{border-bottom:0}tbody tr:nth-child(even){background:#f1f2e9}
+.markdown-body pre{background:#e9ede4;border:1px solid var(--line);padding:18px;overflow:auto;white-space:pre;line-height:1.6;border-radius:8px;font-size:12px}
+.markdown-body code{font-family:Consolas,monospace;background:#e9ede4;padding:2px 4px;border-radius:3px;font-size:.9em}
+.markdown-body pre code{padding:0;background:none}
+.code-block{position:relative}.copy-code{position:absolute;right:8px;top:8px;font-size:10px;padding:4px 8px}
+.message-controls,.asset-controls,.composer-tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.message-controls button,.asset-controls button,.composer-tools button{padding:6px 10px;font-size:11px;background:transparent}
+.composer-tools{margin:0 0 9px}.composer-tools button:hover{background:var(--accent)}
+.capability-strip{display:flex;flex-wrap:wrap;gap:6px;margin:18px auto;max-width:850px}
+.capability-chip{font-size:10px;padding:5px 9px;border:1px solid var(--line);border-radius:20px;color:#5d7058}
+.source-details{margin:16px 0 0;font-size:12px;background:#eef0e7}
+.source-details summary{font-weight:600}.source-card{padding:14px 0;border-bottom:1px solid var(--line)}
+.source-card strong{font-size:12px;letter-spacing:normal;display:block;margin:0 0 4px}
+.source-card p{font-size:12px;line-height:1.6;white-space:pre-wrap;margin:7px 0}
+.source-card small{font-size:10px}.source-link{font-size:11px}.technical-details{padding:10px 0;background:transparent}
+.technical-details pre{max-height:240px;overflow:auto;font-size:10px}
+.tool-list{padding-left:18px;color:#596f53}.tool-failed,.warning-note{color:#9b512e}
+.citation{display:inline-block;padding:0 5px;margin:0 2px;vertical-align:baseline;font-size:10px;color:#346449;border-color:#bdcbb1;background:#eaf0dd;border-radius:4px;line-height:1.6}
+.citation.unverified{background:#f4e6d8;color:#855d40}
+.asset-card{padding:20px;background:#fffdf7;border:1px solid var(--line);border-radius:12px;margin:20px 0}
+#saved-assets{max-width:850px;margin:24px auto;font-size:13px}
+.asset-card h3{font-size:16px;margin:0 0 15px;font-weight:600}.chart-card svg{width:100%;height:auto;display:block;background:#fffdf7}
+.chart-data{margin-top:12px;background:#f1f2e9;padding:12px}.chart-data table{margin-top:12px}
+.generated-image{display:block;width:100%;height:auto;max-height:650px;object-fit:contain;border-radius:8px;margin:10px 0}
+.action-link{display:inline-block;padding:8px 12px;border:1px solid var(--line);border-radius:8px;margin:8px 8px 0 0;font-size:12px}
+.pending-message{padding:20px 0;color:var(--muted);font-size:13px}.pending-message:before{content:'◌';display:inline-block;margin-right:8px;animation:rotate 1.5s linear infinite}
+@keyframes rotate{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.pending-message:before{animation:none}}
 @media(max-width:1000px){
   body{
   grid-template-columns:220px 1fr}

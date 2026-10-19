@@ -16,7 +16,11 @@ class Store:
                 CREATE TABLE IF NOT EXISTS messages(id INTEGER PRIMARY KEY, session TEXT, role TEXT, content TEXT);
                 CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY, session TEXT, name TEXT, text TEXT);
                 CREATE TABLE IF NOT EXISTS drafts(id TEXT PRIMARY KEY, session TEXT, title TEXT, content TEXT);
+                CREATE TABLE IF NOT EXISTS assets(id TEXT PRIMARY KEY, session TEXT, kind TEXT, title TEXT, payload BLOB, metadata TEXT);
             """)
+            columns = {r[1] for r in db.execute("PRAGMA table_info(messages)")}
+            if "metadata" not in columns:
+                db.execute("ALTER TABLE messages ADD COLUMN metadata TEXT DEFAULT '{}'")
 
     @contextmanager
     def connect(self):
@@ -43,14 +47,14 @@ class Store:
         with self.connect() as db:
             db.execute("UPDATE sessions SET settings=? WHERE id=?", (json.dumps(settings), session))
 
-    def history(self, session, limit=40):
+    def history(self, session, limit=40, rich=False):
         with self.connect() as db:
-            rows = db.execute("SELECT role,content FROM messages WHERE session=? ORDER BY id DESC LIMIT ?", (session, limit)).fetchall()
-        return [{"role": r, "content": c} for r, c in reversed(rows)]
+            rows = db.execute("SELECT role,content,metadata FROM messages WHERE session=? ORDER BY id DESC LIMIT ?", (session, limit)).fetchall()
+        return [{"role": r, "content": c, **({"metadata": json.loads(m or '{}')} if rich else {})} for r, c, m in reversed(rows)]
 
-    def append(self, session, role, content):
+    def append(self, session, role, content, metadata=None):
         with self.connect() as db:
-            db.execute("INSERT INTO messages(session,role,content) VALUES (?,?,?)", (session, role, content))
+            db.execute("INSERT INTO messages(session,role,content,metadata) VALUES (?,?,?,?)", (session, role, content, json.dumps(metadata or {}, ensure_ascii=False)))
 
     def clear_history(self, session):
         with self.connect() as db:
@@ -87,3 +91,23 @@ class Store:
         with self.connect() as db:
             rows = db.execute("SELECT id,title,content FROM drafts WHERE session=? ORDER BY rowid DESC", (session,)).fetchall()
         return [{"id": i, "title": t, "content": c} for i, t, c in rows]
+
+    def save_asset(self, session, kind, title, payload, metadata):
+        if kind not in {"chart", "image"} or len(payload) > 10_000_000:
+            raise ValueError("Unsupported asset or size exceeds 10 MB")
+        asset_id = uuid.uuid4().hex
+        with self.connect() as db:
+            if db.execute("SELECT COUNT(*) FROM assets WHERE session=?", (session,)).fetchone()[0] >= 100:
+                raise ValueError("Workspace limit is 100 generated assets")
+            db.execute("INSERT INTO assets VALUES (?,?,?,?,?,?)", (asset_id, session, kind, title[:200], payload, json.dumps(metadata, ensure_ascii=False)))
+        return {"id": asset_id, "kind": kind, "title": title[:200], **metadata}
+
+    def asset(self, session, asset_id):
+        with self.connect() as db:
+            row = db.execute("SELECT kind,title,payload,metadata FROM assets WHERE session=? AND id=?", (session, asset_id)).fetchone()
+        return {"id": asset_id, "kind": row[0], "title": row[1], "payload": row[2], **json.loads(row[3])} if row else None
+
+    def assets(self, session):
+        with self.connect() as db:
+            rows = db.execute("SELECT id,kind,title,metadata FROM assets WHERE session=? ORDER BY rowid DESC LIMIT 40", (session,)).fetchall()
+        return [{"id": i, "kind": k, "title": t, **json.loads(m)} for i, k, t, m in rows]

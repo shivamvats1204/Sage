@@ -14,9 +14,11 @@ class FakeProvider:
     def __init__(self, messages):
         self.messages = iter(messages)
         self.requests = []
+        self.tool_requests = []
 
     def complete(self, messages, settings, tools):
         self.requests.append(list(messages))
+        self.tool_requests.append(list(tools))
         value = next(self.messages)
         if isinstance(value, Exception):
             raise value

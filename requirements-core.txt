@@ -1,2 +1,7 @@
 python-dotenv>=1.0,<2
 pypdf>=5,<7
+markdown-it-py>=3,<5
+bleach>=6,<7
+ddgs>=9,<10
+huggingface-hub>=0.34,<2
+pillow>=10,<13

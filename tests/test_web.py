@@ -71,6 +71,25 @@ class WebTests(unittest.TestCase):
             self.client.open(self.url + "/../.env")
         self.assertEqual(error.exception.code, 404)
 
+    def test_rich_history_and_asset_access_are_session_scoped(self):
+        from unittest.mock import patch
+        # Get the server-issued session without exposing it outside the test.
+        cookies = next(h.cookiejar for h in self.client.handlers if isinstance(h, urllib.request.HTTPCookieProcessor))
+        session = next(cookie.value for cookie in cookies if cookie.name == 'sage_session')
+        store = self.server.store
+        asset = store.save_asset(session, 'image', 'Private image', b'PNG-test', {'mime':'image/png'})
+        store.append(session, 'assistant', '| A | B |\n|---|---|\n| 1 | 2 |', {'assets':[asset]})
+        with patch.dict('os.environ', {'SAGE_IMAGE_API_KEY':'test-secret-not-for-browser'}):
+            state = json.load(self.client.open(self.url + '/api/state'))
+        self.assertIn('<table>', state['history'][0]['html'])
+        self.assertIn('capabilities', state)
+        self.assertNotIn('test-secret-not-for-browser', json.dumps(state))
+        self.assertEqual(self.client.open(self.url + '/api/assets/' + asset['id']).read(), b'PNG-test')
+        outsider = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with self.assertRaises(urllib.error.HTTPError) as error:
+            outsider.open(self.url + '/api/assets/' + asset['id'])
+        self.assertEqual(error.exception.code, 404)
+
 
 if __name__ == "__main__":
     unittest.main()

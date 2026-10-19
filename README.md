@@ -10,7 +10,7 @@ Python 3.12 is recommended.
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r Requirements.txt
-Copy-Item .env.example .env
+# Create .env and add your existing provider key (see Configuration below).
 python Main.py
 ```
 
@@ -33,6 +33,12 @@ Open http://127.0.0.1:8765. The browser application is served by the Python back
 - Compare documents through list/read/search tools, calculate arithmetic, and save generated drafts for review and export.
 - Inspect tool activity, export conversations and drafts, remove documents, and clear conversation history.
 - Adjust model, creativity, response length, model-round limit, source count, conversation memory, draft permission, and custom instructions.
+- Read formatted headings, comparison tables, lists, code blocks, and clickable source references. Copy individual answers or export Markdown.
+- Search the public web with inspectable links and dated snippets. Sage distinguishes search snippets from full-page evidence.
+- Create bar, line, and pie charts from supplied data. Inspect chart values; download SVG/CSV in the browser or PNG on desktop.
+- Generate and download images using the modern Hugging Face Inference Providers integration when an image token is configured.
+- Recognize your configured name, or remember a name you explicitly ask Sage to use. Profile & settings controls personalization, web search, and image permission.
+- Use browser read-aloud and optional dictation, and request Google/YouTube links you choose to open.
 
 Try uploading `examples/project-brief.md`, then ask: “Calculate the total budget and save a cited project brief.” Without a model key, Sage returns matching source passages and clearly labels local-search mode; it does not simulate AI answers.
 
@@ -42,9 +48,15 @@ Try uploading `examples/project-brief.md`, then ask: “Calculate the total budg
 
 Local data lives in `.sage/sage.db`; `SAGE_DATA_DIR` overrides the location. Desktop uses a persistent local session. Browsers have separate cookie-scoped sessions and do not automatically share desktop documents or history. Disabling memory stops use and storage of subsequent chat turns; use Clear conversation to delete previously saved turns. Documents and drafts remain until separately removed or the local data directory is deleted. Storage is local plaintext; protect the machine and backups accordingly.
 
+Keep existing `.env` values. `Username` supplies the default profile name (handled separately from Windows' login name); the name field overrides it per session. Disabling personalization stops using that profile name and removes the name-memory tool. Previously saved conversation text may still contain names; clear history separately if desired. `HuggingFaceAPIKey`, `SAGE_IMAGE_API_KEY`, or `HF_TOKEN` enables image generation. A Groq chat key cannot generate images. Image provider permissions, model availability, and credits must also permit inference; select the image model in settings. Prompts go to that provider only when image generation is requested. Default image model: `black-forest-labs/FLUX.1-schnell`.
+
+Search queries go to the search service; document passages are not intentionally included in public searches. Retrieved web text is untrusted evidence. Browser speech support depends on the browser/OS; recognition may use the browser vendor's service and starts only when you click Dictate and grant microphone access. Desktop voice and local app controls remain available through the original launcher.
+
+Web research allows at most two searches per turn. When two or more model rounds are available, the last is reserved for an answer rather than more tool calls. One automatic retry is allowed per turn when the provider returns a `Retry-After` of 45 seconds or less; longer waits and exhausted limits produce a clear message while preserving completed work.
+
 Document retrieval uses Unicode lexical scoring with overlapping chunks; it is not embedding-based semantic search. Uploaded document names and relevant passages are sent to the configured model when answering. Tool permissions are enforced in Python. Tools cannot run shell commands, control applications, send messages, or publish drafts. Source panels show retrieved evidence; generated citations still need inspection.
 
-The web server binds only to loopback, checks Host/Origin and CSRF tokens, limits request size, serializes session mutations, and renders user/model text without HTML interpretation. It is a local application, not a public multi-user deployment: authentication, TLS, deployment limits, and tenant administration are future work.
+The web server binds only to loopback, checks Host/Origin and CSRF tokens, limits request size, and serializes session mutations. Assistant Markdown is parsed with raw HTML disabled and sanitized; user text remains literal. Arbitrary remote Markdown images are not loaded. Generated images are served through session-scoped asset routes. It is a local application, not a public multi-user deployment: authentication, TLS, deployment limits, and tenant administration are future work.
 
 ## Original desktop features
 
@@ -55,7 +67,7 @@ python -m pip install -r requirements-legacy.txt
 python legacy_main.py
 ```
 
-It retains its original provider and browser requirements: configure `Username`, `AssistantName`, `CohereAPIKey`, `GroqAPIKey`, `HuggingFaceAPIKey`, `AssistantVoice`, and `InputLanguage` in `.env` for the legacy integrations. Those legacy integrations have not been migrated into the new agent or web shell. The `Backend/` and original `Frontend/GUI.py` modules remain intact.
+It retains its original provider and browser requirements: configure `Username`, `AssistantName`, `CohereAPIKey`, `GroqAPIKey`, `HuggingFaceAPIKey`, `AssistantVoice`, and `InputLanguage` in `.env` for the legacy integrations. The new shared agent ports search, profile recognition, content drafting, search/play links, and modernized image generation without importing the legacy modules' background loops. The `Backend/` and original `Frontend/GUI.py` modules remain intact; their older third-party endpoints may require maintenance. See [feature migration and next steps](docs/FEATURES.md).
 
 ## Verify
 
@@ -64,4 +76,4 @@ python -m unittest discover -s tests -v
 python -m compileall -q sage Main.py web_app.py
 ```
 
-The suite checks multi-step execution with a scripted provider, source retrieval, session isolation, permission enforcement, history preservation, memory opt-out, Qt worker completion, and real local HTTP upload/search/security flows. It does not call a paid model service. Qt tests skip when its dependency is absent. CI runs on Windows with Python 3.12.
+The suite checks multi-step execution with a scripted provider, source retrieval, rich-history migration, safe Markdown, numeric chart validation, image/search adapters, profile memory, asset/session isolation, permission enforcement, history preservation, memory opt-out, Qt chart rendering/worker completion, and real local HTTP upload/search/security flows. Automated tests mock external providers and do not call a paid model service. Qt tests skip when its dependency is absent. CI runs on Windows with Python 3.12.

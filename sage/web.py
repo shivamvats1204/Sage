@@ -8,11 +8,14 @@ import json
 from pathlib import Path
 import secrets
 import threading
+import re
 
 from .agent import Agent
-from .config import Settings, WORKSPACES, data_directory, load_environment
+from .config import Settings, WORKSPACES, data_directory, load_environment, profile_name
 from .documents import extract_text
 from .store import Store
+from .presentation import render_markdown, old_sources
+from .integrations import capabilities
 
 STATIC = Path(__file__).resolve().parents[1] / "web"
 
@@ -80,13 +83,29 @@ class Handler(BaseHTTPRequestHandler):
             name = {"/": "index.html", "/app.js": "app.js", "/style.css": "style.css"}[self.path]
             mime = {"index.html": "text/html; charset=utf-8", "app.js": "text/javascript; charset=utf-8", "style.css": "text/css; charset=utf-8"}[name]
             self.send(200, (STATIC / name).read_bytes(), mime)
+        elif re.fullmatch(r"/api/assets/[a-f0-9]{32}", self.path):
+            session = self.session()
+            asset = self.server.store.asset(session, self.path.rsplit("/", 1)[-1])
+            if not asset:
+                self.send(404, {"error": "Asset not found in this session"})
+            elif asset["kind"] == "image":
+                self.send(200, asset["payload"], "image/png")
+            else:
+                self.send(200, {k: v for k, v in asset.items() if k != "payload"})
         elif self.path == "/api/state":
             session = self.session()
             store = self.server.store
-            self.send(200, {"settings": Settings.parse(store.settings(session)).to_dict(),
-                "workspaces": list(WORKSPACES), "history": store.history(session),
+            settings = Settings.parse(store.settings(session))
+            history = store.history(session, rich=True)
+            for message in history:
+                message["html"] = render_markdown(message["content"]) if message["role"] == "assistant" else ""
+                if message["role"] == "assistant" and not message["metadata"].get("sources"):
+                    message["metadata"]["sources"] = old_sources(store, session, message["content"])
+            self.send(200, {"settings": settings.to_dict(), "profile": {"display_name": profile_name(settings)},
+                "capabilities": capabilities(), "assets": store.assets(session),
+                "workspaces": list(WORKSPACES), "history": history,
                 "documents": [{"id": d["id"], "name": d["name"]} for d in store.documents(session)],
-                "drafts": store.drafts(session), "model_available": self.server.agent.provider.available,
+                "drafts": [{**d, "html": render_markdown(d["content"])} for d in store.drafts(session)], "model_available": self.server.agent.provider.available,
                 "csrf": self.server.token(session)}, session=session)
         else:
             self.send(404, {"error": "Not found"})
@@ -117,6 +136,7 @@ class Handler(BaseHTTPRequestHandler):
                 settings = Settings.parse(body.get("settings", store.settings(session))).to_dict()
                 store.save_settings(session, settings)
                 result = self.server.agent.respond(session, body.get("message"), settings)
+                result["html"] = render_markdown(result["answer"])
             elif self.path == "/api/settings":
                 settings = Settings.parse(body).to_dict()
                 store.save_settings(session, settings)

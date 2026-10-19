@@ -15,8 +15,12 @@ WORKSPACES = {
 def load_environment():
     # Optional dependency; never overwrite environment injected by the host.
     try:
-        from dotenv import load_dotenv
+        from dotenv import load_dotenv, dotenv_values
         load_dotenv(ROOT / ".env", override=False)
+        # Windows already defines USERNAME case-insensitively; keep Sage's chosen name separate.
+        chosen_name = dotenv_values(ROOT / ".env").get("Username")
+        if chosen_name:
+            os.environ.setdefault("SAGE_PROFILE_NAME", chosen_name)
     except ImportError:
         pass
 
@@ -24,7 +28,7 @@ def load_environment():
 @dataclass(frozen=True)
 class Settings:
     workspace: str = "everyday"
-    model: str = "llama-3.3-70b-versatile"
+    model: str = "qwen/qwen3.8-27b"
     temperature: float = 0.3
     max_tokens: int = 1800
     max_steps: int = 4
@@ -32,6 +36,12 @@ class Settings:
     remember: bool = True
     allow_drafts: bool = True
     instructions: str = ""
+    display_name: str = ""
+    personalize: bool = True
+    allow_web: bool = True
+    allow_images: bool = True
+    image_model: str = "black-forest-labs/FLUX.1-schnell"
+    voice_language: str = "en-IN"
 
     @classmethod
     def parse(cls, value=None):
@@ -49,10 +59,16 @@ class Settings:
             expected = (float, int) if key == "temperature" else (int,)
             if type(v) not in expected or not low <= v <= high:
                 raise ValueError(f"{key} must be between {low} and {high}")
-        if type(result.remember) is not bool or type(result.allow_drafts) is not bool:
-            raise ValueError("Memory and draft controls must be booleans")
+        if any(type(getattr(result, name)) is not bool for name in ("remember", "allow_drafts", "personalize", "allow_web", "allow_images")):
+            raise ValueError("Permission and memory controls must be booleans")
         if not isinstance(result.instructions, str) or len(result.instructions) > 3000:
             raise ValueError("Instructions must be at most 3000 characters")
+        if not isinstance(result.display_name, str) or len(result.display_name) > 80 or any(ord(c) < 32 for c in result.display_name):
+            raise ValueError("Name must contain at most 80 printable characters")
+        if not isinstance(result.image_model, str) or not 1 <= len(result.image_model) <= 160:
+            raise ValueError("Image model must contain 1–160 characters")
+        if result.voice_language not in {"en-IN", "en-US", "hi-IN", "ar-SA"}:
+            raise ValueError("Choose a supported voice language")
         return result
 
     def to_dict(self):
@@ -61,3 +77,9 @@ class Settings:
 
 def data_directory():
     return Path(os.environ.get("SAGE_DATA_DIR", str(ROOT / ".sage")))
+
+
+def profile_name(settings):
+    if not settings.personalize:
+        return ""
+    return (settings.display_name or os.environ.get("SAGE_PROFILE_NAME") or os.environ.get("Username", "")).strip()[:80]

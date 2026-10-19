@@ -6,7 +6,9 @@ import urllib.request
 
 
 class ProviderError(RuntimeError):
-    pass
+    def __init__(self, message, retry_after=None):
+        super().__init__(message)
+        self.retry_after = retry_after
 
 
 class ChatProvider:
@@ -37,6 +39,11 @@ class ChatProvider:
                 raise ValueError("Invalid message content")
             return {"role": "assistant", **{k: message[k] for k in ("content", "tool_calls") if k in message}}
         except urllib.error.HTTPError as exc:
+            if exc.code == 429:
+                retry = exc.headers.get('Retry-After', '') if exc.headers else ''
+                wait = f" Retry after {retry} seconds." if retry.isdecimal() and len(retry) < 7 else " Wait briefly before retrying, or choose another available model."
+                delay = int(retry) if retry.isdecimal() and len(retry) < 7 and 0 < int(retry) <= 45 else None
+                raise ProviderError("The model provider's rate or usage limit was reached (HTTP 429)." + wait, retry_after=delay) from None
             raise ProviderError(f"Model service returned HTTP {exc.code}. Check the model, credentials, and quota.") from None
         except (urllib.error.URLError, TimeoutError, KeyError, ValueError, IndexError) as exc:
             raise ProviderError("Could not obtain a valid model response. Check your provider configuration and connection.") from exc
